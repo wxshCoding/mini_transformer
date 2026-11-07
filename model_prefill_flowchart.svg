@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2600" viewBox="0 0 3840 2600">
+  <defs>
+    <linearGradient id="headerGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#102A43"/>
+      <stop offset="58%" stop-color="#173F5F"/>
+      <stop offset="100%" stop-color="#22577A"/>
+    </linearGradient>
+    <linearGradient id="panelGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F8FAFC"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="#102A43" flood-opacity="0.12"/>
+    </filter>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="12" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#24435D"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="14" markerHeight="14" refX="12" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#D97706"/>
+    </marker>
+    <marker id="arrowMagenta" markerWidth="14" markerHeight="14" refX="12" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#C02662"/>
+    </marker>
+    <marker id="arrowGray" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#64748B"/>
+    </marker>
+    <style>
+      .title { font-family: "Microsoft YaHei","Noto Sans CJK SC",sans-serif; font-size: 56px; font-weight: 700; fill: #FFFFFF; }
+      .subtitle { font-family: "Microsoft YaHei","Noto Sans CJK SC",sans-serif; font-size: 23px; fill: #D9EAF2; }
+      .chip { font-family: Consolas,"SFMono-Regular",monospace; font-size: 22px; font-weight: 700; fill: #123047; }
+      .panel-title { font-family: "Microsoft YaHei","Noto Sans CJK SC",sans-serif; font-size: 30px; font-weight: 700; fill: #16324F; }
+      .node-title { font-family: "Microsoft YaHei","Noto Sans CJK SC",sans-serif; font-size: 23px; font-weight: 700; fill: #15324A; }
+      .text { font-family: "Microsoft YaHei","Noto Sans CJK SC",sans-serif; font-size: 20px; fill: #29465B; }
+      .small { font-family: "Microsoft YaHei","Noto Sans CJK SC",sans-serif; font-size: 17px; fill: #405B6C; }
+      .tiny { font-family: "Microsoft YaHei","Noto Sans CJK SC",sans-serif; font-size: 15px; fill: #526B7A; }
+      .mono { font-family: Consolas,"SFMono-Regular",monospace; font-size: 18px; fill: #1E3A50; }
+      .mono-small { font-family: Consolas,"SFMono-Regular",monospace; font-size: 15px; fill: #334E68; }
+      .formula { font-family: Cambria Math,"Times New Roman",serif; font-size: 22px; fill: #183B56; font-style: italic; }
+      .white-label { font-family: "Microsoft YaHei","Noto Sans CJK SC",sans-serif; font-size: 18px; font-weight: 700; fill: #FFFFFF; }
+      .panel { fill: url(#panelGrad); stroke: #C7D5E0; stroke-width: 2.5; rx: 22; filter: url(#shadow); }
+      .input-box { fill: #E8F4FA; stroke: #2A7F9E; stroke-width: 2.5; rx: 15; }
+      .model-box { fill: #EEF0FF; stroke: #5966C2; stroke-width: 2.5; rx: 15; }
+      .norm-box { fill: #E9F8F3; stroke: #27866F; stroke-width: 2.5; rx: 15; }
+      .attn-box { fill: #FFF4DE; stroke: #C57B10; stroke-width: 2.5; rx: 15; }
+      .cache-box { fill: #FFF0D8; stroke: #D97706; stroke-width: 3; rx: 15; }
+      .sample-box { fill: #FFF0F5; stroke: #C02662; stroke-width: 2.5; rx: 15; }
+      .train-box { fill: #ECF8EF; stroke: #2F855A; stroke-width: 2.5; rx: 15; }
+      .gray-box { fill: #F1F5F9; stroke: #718096; stroke-width: 2; rx: 15; }
+      .warning-box { fill: #FFF1F2; stroke: #BE3455; stroke-width: 3; rx: 15; }
+      .detail-frame { fill: #FBFCFF; stroke: #8A98D2; stroke-width: 2.5; stroke-dasharray: 10 7; rx: 18; }
+      .flow { fill: none; stroke: #24435D; stroke-width: 4; marker-end: url(#arrow); }
+      .flow-thin { fill: none; stroke: #24435D; stroke-width: 3; marker-end: url(#arrow); }
+      .control { fill: none; stroke: #64748B; stroke-width: 3; stroke-dasharray: 9 7; marker-end: url(#arrowGray); }
+      .cache-flow { fill: none; stroke: #D97706; stroke-width: 6; marker-end: url(#arrowOrange); }
+      .cache-read { fill: none; stroke: #D97706; stroke-width: 4; stroke-dasharray: 10 6; marker-end: url(#arrowOrange); }
+      .loop { fill: none; stroke: #C02662; stroke-width: 5; marker-end: url(#arrowMagenta); }
+      .residual { fill: none; stroke: #5966C2; stroke-width: 3.5; stroke-dasharray: 9 6; marker-end: url(#arrow); }
+      .section-tag { fill: #16324F; rx: 13; }
+      .divider { stroke: #D7E1E8; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <rect width="3840" height="2600" fill="#EEF3F7"/>
+  <rect x="0" y="0" width="3840" height="165" fill="url(#headerGrad)"/>
+  <text x="70" y="70" class="title">Mini Transformer：Prefill–KV Cache–Decode 详细流程图</text>
+  <text x="73" y="119" class="subtitle">严格对应 model.py / generate.py / train.py / tokenizer.py ｜ Decoder-only · Pre-LN · Causal Self-Attention · Learned Absolute Position</text>
+
+  <g filter="url(#shadow)">
+    <rect x="2510" y="31" width="190" height="48" rx="24" fill="#DDF3FA"/>
+    <rect x="2720" y="31" width="190" height="48" rx="24" fill="#E8E9FF"/>
+    <rect x="2930" y="31" width="190" height="48" rx="24" fill="#FFF1D6"/>
+    <rect x="3140" y="31" width="190" height="48" rx="24" fill="#E7F7EF"/>
+    <rect x="3350" y="31" width="410" height="48" rx="24" fill="#FFF0F5"/>
+  </g>
+  <text x="2605" y="63" text-anchor="middle" class="chip">W = 8</text>
+  <text x="2815" y="63" text-anchor="middle" class="chip">C = 128</text>
+  <text x="3025" y="63" text-anchor="middle" class="chip">H = 4</text>
+  <text x="3235" y="63" text-anchor="middle" class="chip">Dₕ = 32</text>
+  <text x="3555" y="63" text-anchor="middle" class="chip">Layers = 3 · FFN = 512</text>
+  <text x="2515" y="119" class="subtitle">当前语料：V=117 · 249 tokens · 总参数 626,165 · 训练 batch=16</text>
+
+  <!-- Panel A -->
+  <rect x="50" y="195" width="3740" height="500" class="panel"/>
+  <rect x="75" y="215" width="48" height="42" class="section-tag"/>
+  <text x="99" y="244" text-anchor="middle" class="white-label">A</text>
+  <text x="140" y="246" class="panel-title">端到端推理状态机（generate.py）</text>
+  <text x="3650" y="244" text-anchor="end" class="small">主张量流：实线 ｜ 控制分支：灰虚线 ｜ 自回归回环：洋红</text>
+
+  <!-- A arrows -->
+  <path d="M360 360 H410" class="flow"/>
+  <path d="M720 360 H770" class="flow"/>
+  <path d="M1080 360 H1130" class="flow"/>
+  <path d="M1430 360 H1480" class="flow"/>
+  <path d="M1800 360 H1850" class="flow"/>
+  <path d="M2190 360 H2240" class="flow"/>
+  <path d="M2530 360 H2570" class="flow"/>
+  <path d="M2830 360 H3000" class="control"/>
+  <path d="M2700 435 V493 H2840" class="control"/>
+  <path d="M3080 545 H3260 V505" class="control"/>
+  <path d="M2960 620 V632 H3260" class="control"/>
+  <path d="M3690 505 H3730 V662 H1640 V425" class="loop"/>
+  <path d="M3690 632 H3730 V662" class="loop"/>
+
+  <!-- A nodes -->
+  <rect x="90" y="300" width="270" height="120" class="input-box"/>
+  <text x="225" y="335" text-anchor="middle" class="node-title">Prompt 文本</text>
+  <text x="225" y="369" text-anchor="middle" class="small">完整历史保留在 x</text>
+  <text x="225" y="397" text-anchor="middle" class="mono-small">B=1，长度 N</text>
+
+  <rect x="410" y="290" width="310" height="140" class="input-box"/>
+  <text x="565" y="326" text-anchor="middle" class="node-title">Word-level Tokenizer</text>
+  <text x="565" y="359" text-anchor="middle" class="small">lowercase + whitespace split</text>
+  <text x="565" y="388" text-anchor="middle" class="mono-small">OOV → &lt;unk&gt; · ids [1,N]</text>
+  <text x="565" y="414" text-anchor="middle" class="tiny">无 BOS / EOS 自动停止</text>
+
+  <rect x="770" y="300" width="310" height="120" class="input-box"/>
+  <text x="925" y="335" text-anchor="middle" class="node-title">最近上下文窗口</text>
+  <text x="925" y="370" text-anchor="middle" class="mono">x[:, -W:]，W=8</text>
+  <text x="925" y="399" text-anchor="middle" class="small">超长 prompt 仅模型侧截断</text>
+
+  <rect x="1130" y="300" width="300" height="120" class="model-box"/>
+  <text x="1280" y="337" text-anchor="middle" class="node-title">PREFILL</text>
+  <text x="1280" y="371" text-anchor="middle" class="mono-small">P=0，T≤8</text>
+  <text x="1280" y="400" text-anchor="middle" class="small">并行建立 3 层 K/V</text>
+
+  <rect x="1480" y="300" width="320" height="120" class="model-box"/>
+  <text x="1640" y="335" text-anchor="middle" class="node-title">取最后位置分布</text>
+  <text x="1640" y="369" text-anchor="middle" class="mono">logits[:, -1, :]</text>
+  <text x="1640" y="398" text-anchor="middle" class="small">预测“下一个”token</text>
+
+  <rect x="1850" y="290" width="340" height="140" class="sample-box"/>
+  <text x="2020" y="326" text-anchor="middle" class="node-title">随机采样</text>
+  <text x="2020" y="360" text-anchor="middle" class="mono-small">softmax → multinomial(1)</text>
+  <text x="2020" y="390" text-anchor="middle" class="small">无 temperature / top-k / top-p</text>
+  <text x="2020" y="416" text-anchor="middle" class="tiny">不是 greedy argmax</text>
+
+  <rect x="2240" y="300" width="290" height="120" class="sample-box"/>
+  <text x="2385" y="337" text-anchor="middle" class="node-title">追加生成 token</text>
+  <text x="2385" y="371" text-anchor="middle" class="mono-small">x ← cat(x, yₖ)</text>
+  <text x="2385" y="400" text-anchor="middle" class="small">完整输出历史不丢弃</text>
+
+  <polygon points="2700,285 2830,360 2700,435 2570,360" fill="#F1F5F9" stroke="#64748B" stroke-width="2.5"/>
+  <text x="2700" y="350" text-anchor="middle" class="node-title">最后一步？</text>
+  <text x="2700" y="380" text-anchor="middle" class="mono-small">step = K−1</text>
+  <text x="2870" y="339" class="small">是</text>
+  <text x="2720" y="478" class="small">否</text>
+
+  <rect x="3000" y="300" width="310" height="120" class="train-box"/>
+  <text x="3155" y="336" text-anchor="middle" class="node-title">输出文本</text>
+  <text x="3155" y="369" text-anchor="middle" class="mono-small">itos[id] → " ".join</text>
+  <text x="3155" y="399" text-anchor="middle" class="small">包含完整 prompt + 生成序列</text>
+
+  <polygon points="2960,475 3080,550 2960,625 2840,550" fill="#F8FAFC" stroke="#64748B" stroke-width="2.5"/>
+  <text x="2960" y="540" text-anchor="middle" class="node-title">cache 未满？</text>
+  <text x="2960" y="570" text-anchor="middle" class="mono-small">cached_len &lt; 8</text>
+  <text x="3110" y="528" class="small">是</text>
+  <text x="3010" y="650" class="small">否</text>
+
+  <rect x="3260" y="455" width="430" height="100" class="cache-box"/>
+  <text x="3475" y="489" text-anchor="middle" class="node-title">DECODE(yₖ, cache)</text>
+  <text x="3475" y="522" text-anchor="middle" class="mono-small">T=1 · cache P→P+1 · 得 logitsₖ₊₁</text>
+  <text x="3475" y="546" text-anchor="middle" class="tiny">输入是“刚采样”的 token，不重复 prompt 末 token</text>
+
+  <rect x="3260" y="580" width="430" height="100" class="warning-box"/>
+  <text x="3475" y="614" text-anchor="middle" class="node-title">RE-PREFILL 最新 8 token</text>
+  <text x="3475" y="647" text-anchor="middle" class="mono-small">丢弃旧 cache · position 重新编号 0…7</text>
+  <text x="3475" y="673" text-anchor="middle" class="tiny">cache 满后，每个非最终步都走此分支</text>
+
+  <rect x="90" y="505" width="1020" height="135" class="gray-box"/>
+  <text x="115" y="535" class="node-title">边界行为</text>
+  <text x="115" y="570" class="small">• max_new_tokens &lt; 0：ValueError；= 0：直接返回 tokenizer 解码结果，完全不运行模型</text>
+  <text x="115" y="602" class="small">• 需要生成但 prompt 为空：ValueError；没有 EOS 提前终止，固定生成 K 个 token</text>
+  <text x="115" y="628" class="tiny">• 最后一个采样 token 不再写入 cache（cache 不对外返回，因此不影响输出）</text>
+
+  <!-- Panel B -->
+  <rect x="50" y="720" width="1220" height="1160" class="panel"/>
+  <rect x="75" y="740" width="48" height="42" class="section-tag"/>
+  <text x="99" y="769" text-anchor="middle" class="white-label">B</text>
+  <text x="140" y="771" class="panel-title">模型主干与训练入口</text>
+
+  <rect x="85" y="800" width="1150" height="64" class="gray-box"/>
+  <text x="105" y="827" class="mono-small">符号：B=batch · T=当前输入长度 · P=历史 cache 长度 · S=P+T · W=max_seq_len=8</text>
+  <text x="105" y="851" class="mono-small">约束：1≤T，P+T≤W；C=128，V=117；所有层 cache 的 B/H/P/Dₕ 必须一致</text>
+
+  <!-- B arrows -->
+  <path d="M335 950 H395" class="flow"/>
+  <path d="M745 950 H795" class="flow"/>
+  <path d="M1010 1050 V1060 H237 V1090" class="flow"/>
+  <path d="M385 1175 H440" class="flow"/>
+  <path d="M850 1175 H900" class="flow"/>
+  <path d="M1055 1265 V1305" class="flow"/>
+  <path d="M1055 1415 V1530" class="flow"/>
+
+  <rect x="90" y="895" width="245" height="110" class="input-box"/>
+  <text x="212" y="930" text-anchor="middle" class="node-title">input_ids</text>
+  <text x="212" y="965" text-anchor="middle" class="mono">[B,T] · int64</text>
+  <text x="212" y="993" text-anchor="middle" class="tiny">+ optional past_key_values</text>
+
+  <rect x="395" y="880" width="350" height="140" class="gray-box"/>
+  <text x="570" y="916" text-anchor="middle" class="node-title">输入 / Cache 校验</text>
+  <text x="420" y="950" class="small">• 层数恰好为 L=3</text>
+  <text x="420" y="979" class="small">• 每层为 (K,V)，4D 且同 shape</text>
+  <text x="420" y="1008" class="small">• device / dtype 与新投影一致</text>
+
+  <rect x="795" y="875" width="420" height="175" class="norm-box"/>
+  <text x="1005" y="910" text-anchor="middle" class="node-title">输入表示</text>
+  <text x="820" y="946" class="mono-small">E_tok(input_ids) → [B,T,C]</text>
+  <text x="820" y="978" class="mono-small">pos = arange(P, P+T)</text>
+  <text x="820" y="1010" class="mono-small">E_pos(pos) → [T,C]（广播 B）</text>
+  <text x="820" y="1037" class="formula">X₀ = E_tok + E_pos</text>
+
+  <rect x="90" y="1090" width="295" height="170" class="model-box"/>
+  <text x="237" y="1127" text-anchor="middle" class="node-title">X₀ [B,T,128]</text>
+  <text x="237" y="1162" text-anchor="middle" class="small">learned absolute position</text>
+  <text x="237" y="1193" text-anchor="middle" class="small">不是 RoPE / 正弦位置</text>
+  <text x="237" y="1224" text-anchor="middle" class="tiny">位置范围 P…P+T−1</text>
+
+  <rect x="440" y="1070" width="410" height="210" class="model-box"/>
+  <text x="645" y="1110" text-anchor="middle" class="node-title">Pre-LN Transformer Block × 3</text>
+  <text x="465" y="1149" class="small">① LN₁ → MHA → Residual</text>
+  <text x="465" y="1183" class="small">② LN₂ → FFN → Residual</text>
+  <text x="465" y="1217" class="mono-small">shape 保持 [B,T,128]</text>
+  <text x="465" y="1250" class="tiny">无 dropout · 无 cross-attention</text>
+
+  <rect x="900" y="1090" width="310" height="175" class="norm-box"/>
+  <text x="1055" y="1127" text-anchor="middle" class="node-title">输出投影</text>
+  <text x="925" y="1161" class="small">Final LayerNorm</text>
+  <text x="925" y="1193" class="mono-small">LM Head: 128 → V</text>
+  <text x="925" y="1224" class="tiny">与 token embedding 不共享权重</text>
+  <text x="925" y="1250" class="tiny">Linear 均含 bias</text>
+
+  <rect x="900" y="1305" width="310" height="110" class="sample-box"/>
+  <text x="1055" y="1343" text-anchor="middle" class="node-title">logits</text>
+  <text x="1055" y="1379" text-anchor="middle" class="mono">[B,T,V]</text>
+  <text x="1055" y="1405" text-anchor="middle" class="tiny">位置 t 预测 target t+1</text>
+
+  <rect x="90" y="1320" width="740" height="180" class="cache-box"/>
+  <text x="115" y="1355" class="node-title">两个无梯度推理 API（均 @no_grad）</text>
+  <text x="115" y="1393" class="small">PREFILL：P=0，输入当前窗口 [B,T] → logits [B,T,V] + 三层 cache</text>
+  <text x="115" y="1428" class="small">DECODE：强制输入 [B,1]，past≠None（正常流程 P≥1）→ logits [B,1,V] + 新 cache</text>
+  <text x="115" y="1462" class="mono-small">cache = ((K₁,V₁),(K₂,V₂),(K₃,V₃))</text>
+  <text x="115" y="1488" class="tiny">注意：forward 的第二返回值是 loss；prefill/decode 的第二返回值是 cache</text>
+
+  <rect x="90" y="1530" width="1120" height="210" class="train-box"/>
+  <text x="115" y="1567" class="node-title">训练路径：Next-token Prediction</text>
+  <text x="115" y="1605" class="small">data.txt → lowercase / split → 连续 token 序列 [249]</text>
+  <text x="115" y="1639" class="mono-small">x=data[s:s+8]，targets=data[s+1:s+9] → [B=16,T=8]</text>
+  <text x="115" y="1673" class="mono-small">CrossEntropy(logits.reshape(B·T,V), targets.reshape(B·T))</text>
+  <text x="115" y="1707" class="small">AdamW · lr=3e−4 · 5000 steps → 保存 state_dict / stoi / itos</text>
+  <text x="115" y="1732" class="tiny">训练 forward 不使用 cache；loss 为平均交叉熵；checkpoint 未保存架构超参</text>
+
+  <rect x="90" y="1765" width="1120" height="78" class="gray-box"/>
+  <text x="115" y="1797" class="small">参数量分解：token embedding 14,976 + position embedding 1,024 + 3×198,272 = 594,816</text>
+  <text x="115" y="1828" class="small">+ final LN 256 + LM head 15,093 = <tspan font-weight="700">626,165 parameters</tspan></text>
+
+  <!-- Panel C -->
+  <rect x="1300" y="720" width="2490" height="1160" class="panel"/>
+  <rect x="1325" y="740" width="48" height="42" class="section-tag"/>
+  <text x="1349" y="769" text-anchor="middle" class="white-label">C</text>
+  <text x="1390" y="771" class="panel-title">单层 Pre-LN Block、Multi-Head Self-Attention 与逐层 KV Cache</text>
+
+  <!-- C main block arrows -->
+  <path d="M1515 900 H1560" class="flow-thin"/>
+  <path d="M1750 900 H1790" class="flow-thin"/>
+  <path d="M2020 900 H2075" class="flow-thin"/>
+  <path d="M2135 900 H2190" class="flow-thin"/>
+  <path d="M2380 900 H2420" class="flow-thin"/>
+  <path d="M2720 900 H2785" class="flow-thin"/>
+  <path d="M2845 900 H2900" class="flow-thin"/>
+  <path d="M3110 900 H3150" class="flow-thin"/>
+  <path d="M1425 845 V800 H2105 V870" class="residual"/>
+  <path d="M2105 930 V990 H2815 V930" class="residual"/>
+  <path d="M1905 960 V1050" class="control"/>
+
+  <rect x="1340" y="850" width="175" height="100" class="input-box"/>
+  <text x="1427" y="887" text-anchor="middle" class="node-title">Xℓ</text>
+  <text x="1427" y="922" text-anchor="middle" class="mono-small">[B,T,C]</text>
+
+  <rect x="1560" y="850" width="190" height="100" class="norm-box"/>
+  <text x="1655" y="887" text-anchor="middle" class="node-title">LayerNorm₁</text>
+  <text x="1655" y="922" text-anchor="middle" class="mono-small">Z = LN₁(Xℓ)</text>
+
+  <rect x="1790" y="840" width="230" height="120" class="attn-box"/>
+  <text x="1905" y="880" text-anchor="middle" class="node-title">MHA</text>
+  <text x="1905" y="914" text-anchor="middle" class="small">Causal Self-Attention</text>
+  <text x="1905" y="944" text-anchor="middle" class="mono-small">+ optional cache</text>
+
+  <circle cx="2105" cy="900" r="30" fill="#E8E9FF" stroke="#5966C2" stroke-width="3"/>
+  <text x="2105" y="909" text-anchor="middle" class="node-title">+</text>
+
+  <rect x="2190" y="850" width="190" height="100" class="norm-box"/>
+  <text x="2285" y="887" text-anchor="middle" class="node-title">LayerNorm₂</text>
+  <text x="2285" y="922" text-anchor="middle" class="mono-small">LN₂(Y)</text>
+
+  <rect x="2420" y="840" width="300" height="120" class="model-box"/>
+  <text x="2570" y="877" text-anchor="middle" class="node-title">Feed Forward</text>
+  <text x="2570" y="910" text-anchor="middle" class="mono-small">128 → 512 → GELU</text>
+  <text x="2570" y="940" text-anchor="middle" class="mono-small">→ 128</text>
+
+  <circle cx="2815" cy="900" r="30" fill="#E8E9FF" stroke="#5966C2" stroke-width="3"/>
+  <text x="2815" y="909" text-anchor="middle" class="node-title">+</text>
+
+  <rect x="2900" y="850" width="210" height="100" class="input-box"/>
+  <text x="3005" y="887" text-anchor="middle" class="node-title">Xℓ₊₁</text>
+  <text x="3005" y="922" text-anchor="middle" class="mono-small">[B,T,C]</text>
+
+  <rect x="3150" y="840" width="580" height="120" class="gray-box"/>
+  <text x="3175" y="875" class="node-title">精确 Pre-LN 残差公式</text>
+  <text x="3175" y="911" class="formula">Y = Xℓ + MHA(LN₁(Xℓ))</text>
+  <text x="3175" y="943" class="formula">Xℓ₊₁ = Y + FFN(LN₂(Y))</text>
+
+  <!-- C attention detail frame -->
+  <rect x="1340" y="1035" width="1990" height="630" class="detail-frame"/>
+  <text x="1365" y="1073" class="node-title">MHA 内部放大（该结构在 3 个 Block 中各自独立）</text>
+
+  <!-- detail arrows -->
+  <path d="M1660 1190 H1700" class="flow-thin"/>
+  <path d="M1980 1190 H2020" class="flow-thin"/>
+  <path d="M2320 1190 H2360" class="flow-thin"/>
+  <path d="M2640 1190 H2680" class="flow-thin"/>
+  <path d="M2940 1190 H2980" class="flow-thin"/>
+  <path d="M3350 1135 H3325 V1015 H2170 V1105" class="cache-read"/>
+  <path d="M2170 1280 V1320 H3320 V1200 H3350" class="cache-flow"/>
+  <text x="2730" y="1007" text-anchor="middle" class="mono-small" style="fill:#B45309">READ：Kpast / Vpast</text>
+  <text x="2730" y="1311" text-anchor="middle" class="mono-small" style="fill:#B45309">WRITE：present K / V</text>
+
+  <rect x="1370" y="1120" width="290" height="140" class="attn-box"/>
+  <text x="1515" y="1155" text-anchor="middle" class="node-title">独立 Q / K / V 投影</text>
+  <text x="1395" y="1190" class="mono-small">Q = ZWq + bq</text>
+  <text x="1395" y="1218" class="mono-small">Knew = ZWk + bk</text>
+  <text x="1395" y="1246" class="mono-small">Vnew = ZWv + bv</text>
+
+  <rect x="1700" y="1120" width="280" height="140" class="attn-box"/>
+  <text x="1840" y="1155" text-anchor="middle" class="node-title">拆分多头</text>
+  <text x="1725" y="1192" class="mono-small">view + transpose</text>
+  <text x="1725" y="1222" class="mono-small">Q,Knew,Vnew</text>
+  <text x="1725" y="1249" class="mono-small">[B,4,T,32]</text>
+
+  <rect x="2020" y="1105" width="300" height="175" class="cache-box"/>
+  <text x="2170" y="1140" text-anchor="middle" class="node-title">仅拼接 K / V</text>
+  <text x="2045" y="1176" class="mono-small">Kpast,Vpast [B,4,P,32]</text>
+  <text x="2045" y="1208" class="mono-small">cat(dim=sequence)</text>
+  <text x="2045" y="1240" class="mono-small">K,V [B,4,S,32]</text>
+  <text x="2045" y="1267" class="tiny">Q 永不进入 cache</text>
+
+  <rect x="2360" y="1120" width="280" height="140" class="attn-box"/>
+  <text x="2500" y="1155" text-anchor="middle" class="node-title">Scaled Scores</text>
+  <text x="2500" y="1192" text-anchor="middle" class="formula">QKᵀ / √32</text>
+  <text x="2500" y="1227" text-anchor="middle" class="mono-small">[B,4,T,S]</text>
+  <text x="2500" y="1254" text-anchor="middle" class="tiny">S=P+T</text>
+
+  <rect x="2680" y="1105" width="260" height="175" class="attn-box"/>
+  <text x="2810" y="1140" text-anchor="middle" class="node-title">Mask + Softmax</text>
+  <text x="2705" y="1176" class="mono-small">masked_fill(−∞)</text>
+  <text x="2705" y="1208" class="mono-small">softmax(dim=−1)</text>
+  <text x="2705" y="1240" class="mono-small">weights [B,4,T,S]</text>
+  <text x="2705" y="1267" class="tiny">mask 在 B,H 维广播</text>
+
+  <rect x="2980" y="1120" width="310" height="140" class="attn-box"/>
+  <text x="3135" y="1155" text-anchor="middle" class="node-title">聚合并合并多头</text>
+  <text x="3005" y="1192" class="mono-small">weights @ V → [B,4,T,32]</text>
+  <text x="3005" y="1222" class="mono-small">transpose + concat → [B,T,128]</text>
+  <text x="3005" y="1251" class="mono-small">Wₒ + bₒ → attention_out</text>
+
+  <rect x="1370" y="1340" width="610" height="280" class="gray-box"/>
+  <text x="1395" y="1377" class="node-title">矩形 Causal Mask（最关键的 offset）</text>
+  <text x="1395" y="1412" class="formula">M_mask[i,j] = −∞  iff  j &gt; P+i；否则 0</text>
+  <text x="1395" y="1444" class="mono-small">代码：triu(ones(T,S), diagonal=P+1)</text>
+  <text x="1395" y="1482" class="small">例：P=3，T=2，S=5</text>
+  <text x="1395" y="1518" class="mono">query 0 :  ✓  ✓  ✓  ✓  ×</text>
+  <text x="1395" y="1554" class="mono">query 1 :  ✓  ✓  ✓  ✓  ✓</text>
+  <text x="1395" y="1590" class="tiny">Prefill(P=0)：标准下三角；Decode(T=1)：可见全部 past + 自己</text>
+
+  <rect x="2020" y="1340" width="1270" height="280" class="gray-box"/>
+  <text x="2045" y="1377" class="node-title">Attention 数据方程与形状</text>
+  <text x="2045" y="1416" class="formula">A = softmax(QKᵀ / √Dₕ + M_mask) ∈ ℝᴮˣᴴˣᵀˣˢ</text>
+  <text x="2045" y="1452" class="formula">O_heads = A · V ∈ ℝᴮˣᴴˣᵀˣᴰʰ</text>
+  <text x="2045" y="1489" class="small">Prefill：并行计算 T 个 query；生成只取最后一个位置的 logits。</text>
+  <text x="2045" y="1523" class="small">Decode：仅计算新 token 的 Q/K/V；K/V 仍覆盖 P 个历史 + 当前 token。</text>
+  <text x="2045" y="1557" class="small">Cache 避免历史 token 的 QKV / FFN 重算，但每步 attention 仍读取全部历史。</text>
+  <text x="2045" y="1591" class="tiny">本实现用 torch.cat 更新 K/V：每次增长会重新分配/复制 cache，并非预分配或 paged KV cache。</text>
+
+  <!-- cache bank -->
+  <rect x="3350" y="1035" width="380" height="630" class="cache-box"/>
+  <text x="3540" y="1074" text-anchor="middle" class="node-title">逐层 KV Cache Bank</text>
+  <text x="3540" y="1105" text-anchor="middle" class="mono-small">tuple length = 3</text>
+
+  <rect x="3385" y="1140" width="310" height="120" rx="12" fill="#FFE2B8" stroke="#D97706" stroke-width="2"/>
+  <text x="3410" y="1172" class="node-title">Layer 1</text>
+  <rect x="3410" y="1190" width="125" height="42" rx="8" fill="#F59E0B"/>
+  <rect x="3545" y="1190" width="125" height="42" rx="8" fill="#FB923C"/>
+  <text x="3472" y="1218" text-anchor="middle" class="white-label">K₁</text>
+  <text x="3607" y="1218" text-anchor="middle" class="white-label">V₁</text>
+  <text x="3540" y="1251" text-anchor="middle" class="mono-small">各 [B,4,S,32]</text>
+
+  <rect x="3385" y="1285" width="310" height="120" rx="12" fill="#FFE2B8" stroke="#D97706" stroke-width="2"/>
+  <text x="3410" y="1317" class="node-title">Layer 2</text>
+  <rect x="3410" y="1335" width="125" height="42" rx="8" fill="#F59E0B"/>
+  <rect x="3545" y="1335" width="125" height="42" rx="8" fill="#FB923C"/>
+  <text x="3472" y="1363" text-anchor="middle" class="white-label">K₂</text>
+  <text x="3607" y="1363" text-anchor="middle" class="white-label">V₂</text>
+  <text x="3540" y="1396" text-anchor="middle" class="mono-small">各 [B,4,S,32]</text>
+
+  <rect x="3385" y="1430" width="310" height="120" rx="12" fill="#FFE2B8" stroke="#D97706" stroke-width="2"/>
+  <text x="3410" y="1462" class="node-title">Layer 3</text>
+  <rect x="3410" y="1480" width="125" height="42" rx="8" fill="#F59E0B"/>
+  <rect x="3545" y="1480" width="125" height="42" rx="8" fill="#FB923C"/>
+  <text x="3472" y="1508" text-anchor="middle" class="white-label">K₃</text>
+  <text x="3607" y="1508" text-anchor="middle" class="white-label">V₃</text>
+  <text x="3540" y="1541" text-anchor="middle" class="mono-small">各 [B,4,S,32]</text>
+
+  <text x="3540" y="1590" text-anchor="middle" class="small">总元素数：2·L·B·S·C</text>
+  <text x="3540" y="1622" text-anchor="middle" class="mono-small">B=1,S=8 → 6,144 floats</text>
+  <text x="3540" y="1647" text-anchor="middle" class="tiny">FP32 ≈ 24 KiB</text>
+
+  <rect x="1340" y="1690" width="2390" height="150" class="gray-box"/>
+  <text x="1365" y="1727" class="node-title">单层复杂度（忽略常数）</text>
+  <text x="1365" y="1764" class="small">一般 chunk：O(B·T·C² + B·T·S·C)　｜　Prefill(T=N)：O(B·(N·C² + N²·C))</text>
+  <text x="1365" y="1800" class="small">Decode(T=1)：O(B·(C² + S·C))　｜　scores 临时内存：[B,H,T,S]　｜　KV 总存储：O(2·L·B·S·C)</text>
+  <text x="1365" y="1827" class="tiny">未满窗阶段：单步 attention 随 S 线性增长，累计为二次；满窗后固定 W=8，每步 re-prefill，K 步为 O(K·W²·C)。</text>
+
+  <!-- Panel D -->
+  <rect x="50" y="1905" width="3740" height="625" class="panel"/>
+  <rect x="75" y="1925" width="48" height="42" class="section-tag"/>
+  <text x="99" y="1954" text-anchor="middle" class="white-label">D</text>
+  <text x="140" y="1956" class="panel-title">Prefill → Decode → Cache 满 → Re-Prefill：时间轴、原因与实现边界</text>
+
+  <!-- D timeline base -->
+  <line x1="120" y1="2130" x2="3120" y2="2130" stroke="#B9C9D6" stroke-width="7" stroke-linecap="round"/>
+  <path d="M360 2130 H420" class="flow"/>
+  <path d="M700 2130 H760" class="flow"/>
+  <path d="M1000 2130 H1060" class="flow"/>
+  <path d="M1280 2130 H1340" class="flow"/>
+  <path d="M1570 2130 H1640" class="flow"/>
+  <path d="M1830 2130 H1890" class="flow"/>
+  <path d="M2180 2130 H2240" class="flow"/>
+  <path d="M2480 2130 H2540" class="loop"/>
+  <path d="M2850 2130 H2910" class="cache-flow"/>
+
+  <rect x="90" y="2045" width="270" height="170" class="input-box"/>
+  <text x="225" y="2082" text-anchor="middle" class="node-title">Prompt tokens</text>
+  <text x="225" y="2120" text-anchor="middle" class="mono">x₁ x₂ x₃ …</text>
+  <text x="225" y="2154" text-anchor="middle" class="small">只取最近 ≤8 个</text>
+  <text x="225" y="2187" text-anchor="middle" class="tiny">完整 x 仍保留</text>
+
+  <rect x="420" y="2045" width="280" height="170" class="model-box"/>
+  <text x="560" y="2082" text-anchor="middle" class="node-title">一次 PREFILL</text>
+  <text x="560" y="2119" text-anchor="middle" class="mono-small">并行处理 T₀ 个 token</text>
+  <text x="560" y="2153" text-anchor="middle" class="small">cache：0 → T₀</text>
+  <text x="560" y="2186" text-anchor="middle" class="tiny">首个 y₁ 来自末位 logit</text>
+
+  <rect x="760" y="2045" width="240" height="170" class="sample-box"/>
+  <text x="880" y="2082" text-anchor="middle" class="node-title">采样 y₁</text>
+  <text x="880" y="2118" text-anchor="middle" class="mono-small">softmax + multinomial</text>
+  <text x="880" y="2152" text-anchor="middle" class="small">append 到 x</text>
+  <text x="880" y="2186" text-anchor="middle" class="tiny">若仍需生成 → Decode</text>
+
+  <rect x="1060" y="2045" width="220" height="170" class="cache-box"/>
+  <text x="1170" y="2082" text-anchor="middle" class="node-title">DECODE(y₁)</text>
+  <text x="1170" y="2118" text-anchor="middle" class="mono-small">T=1</text>
+  <text x="1170" y="2152" text-anchor="middle" class="small">cache：P→P+1</text>
+  <text x="1170" y="2186" text-anchor="middle" class="tiny">返回预测 y₂ 的 logits</text>
+
+  <rect x="1340" y="2045" width="230" height="170" class="sample-box"/>
+  <text x="1455" y="2082" text-anchor="middle" class="node-title">采样 y₂</text>
+  <text x="1455" y="2118" text-anchor="middle" class="mono-small">logits₁ → y₂</text>
+  <text x="1455" y="2152" text-anchor="middle" class="small">继续 append</text>
+  <text x="1455" y="2186" text-anchor="middle" class="tiny">logit/token 不要错一位</text>
+
+  <rect x="1640" y="2045" width="190" height="170" class="gray-box"/>
+  <text x="1735" y="2090" text-anchor="middle" class="node-title">…</text>
+  <text x="1735" y="2130" text-anchor="middle" class="small">逐 token</text>
+  <text x="1735" y="2164" text-anchor="middle" class="small">增长 cache</text>
+
+  <rect x="1890" y="2045" width="290" height="170" class="cache-box"/>
+  <text x="2035" y="2082" text-anchor="middle" class="node-title">Cache 达到 W=8</text>
+  <text x="2035" y="2119" text-anchor="middle" class="mono-small">每层 K,V [1,4,8,32]</text>
+  <text x="2035" y="2153" text-anchor="middle" class="small">不能再调用 decode</text>
+  <text x="2035" y="2186" text-anchor="middle" class="tiny">否则 P+1&gt;8 → ValueError</text>
+
+  <rect x="2240" y="2045" width="240" height="170" class="sample-box"/>
+  <text x="2360" y="2082" text-anchor="middle" class="node-title">再采样新 token</text>
+  <text x="2360" y="2119" text-anchor="middle" class="mono-small">先 append 到完整 x</text>
+  <text x="2360" y="2153" text-anchor="middle" class="small">再选择更新方式</text>
+  <text x="2360" y="2186" text-anchor="middle" class="tiny">判断发生在采样之后</text>
+
+  <rect x="2540" y="2025" width="310" height="210" class="warning-box"/>
+  <text x="2695" y="2062" text-anchor="middle" class="node-title">RE-PREFILL 最新窗口</text>
+  <text x="2695" y="2100" text-anchor="middle" class="mono-small">x[:, -8:]</text>
+  <text x="2695" y="2134" text-anchor="middle" class="small">丢弃整套旧 cache</text>
+  <text x="2695" y="2168" text-anchor="middle" class="small">positions 重置为 0…7</text>
+  <text x="2695" y="2202" text-anchor="middle" class="tiny">重新计算所有层 hidden / K / V</text>
+
+  <rect x="2910" y="2045" width="240" height="170" class="cache-box"/>
+  <text x="3030" y="2082" text-anchor="middle" class="node-title">新 Cache</text>
+  <text x="3030" y="2119" text-anchor="middle" class="mono-small">S=8</text>
+  <text x="3030" y="2153" text-anchor="middle" class="small">对应最新窗口</text>
+  <text x="3030" y="2186" text-anchor="middle" class="tiny">下一步仍会 re-prefill</text>
+
+  <rect x="3200" y="2015" width="540" height="230" class="warning-box"/>
+  <text x="3225" y="2052" class="node-title">为什么不能仅 pop 最旧 K/V？</text>
+  <text x="3225" y="2090" class="small">① Learned absolute position 必须把</text>
+  <text x="3250" y="2121" class="small">最新窗口重新编号为 0…7。</text>
+  <text x="3225" y="2155" class="small">② 深层 K/V 的 hidden state 已融合</text>
+  <text x="3250" y="2186" class="small">被移除的旧上下文，必须整体重算。</text>
+  <text x="3225" y="2220" class="tiny">目标：严格等价于对最新 8 token 做完整前向。</text>
+
+  <line x1="90" y1="2270" x2="3740" y2="2270" class="divider"/>
+
+  <rect x="90" y="2295" width="1080" height="185" class="gray-box"/>
+  <text x="115" y="2330" class="node-title">复杂度 / 性能事实</text>
+  <text x="115" y="2366" class="small">• Prefill：O(L·B·(T·C² + T²·C))；并行建立 cache</text>
+  <text x="115" y="2401" class="small">• 单步 Decode：O(L·B·(C² + S·C))；避免历史 FFN/QKV 重算</text>
+  <text x="115" y="2436" class="small">• 满窗 Re-Prefill：每个后续非最终步回到完整窗口计算</text>
+  <text x="115" y="2466" class="tiny">torch.cat 还会产生 O(S) 的 cache 复制内存流量。</text>
+
+  <rect x="1200" y="2295" width="1120" height="185" class="gray-box"/>
+  <text x="1225" y="2330" class="node-title">当前实现限制</text>
+  <text x="1225" y="2366" class="small">• 无 padding / attention mask：batch prefill 需等长且无 padding</text>
+  <text x="1225" y="2401" class="small">• 无 dropout、RoPE、relative position、cross-attention、weight tying</text>
+  <text x="1225" y="2436" class="small">• 无 EOS / 提前停止；&lt;pad&gt; / &lt;unk&gt; 也未从采样中屏蔽</text>
+  <text x="1225" y="2466" class="tiny">公共 decode API 只接受 [B,1]；内部矩形 mask 数学上可支持 chunk。</text>
+
+  <rect x="2350" y="2295" width="1390" height="185" class="gray-box"/>
+  <text x="2375" y="2330" class="node-title">图例与代码定位</text>
+  <rect x="2375" y="2350" width="38" height="25" rx="6" fill="#E8F4FA" stroke="#2A7F9E" stroke-width="2"/>
+  <text x="2425" y="2370" class="small">输入 / token</text>
+  <rect x="2615" y="2350" width="38" height="25" rx="6" fill="#EEF0FF" stroke="#5966C2" stroke-width="2"/>
+  <text x="2665" y="2370" class="small">模型计算</text>
+  <rect x="2855" y="2350" width="38" height="25" rx="6" fill="#FFF0D8" stroke="#D97706" stroke-width="2"/>
+  <text x="2905" y="2370" class="small">Attention / KV cache</text>
+  <rect x="3095" y="2350" width="38" height="25" rx="6" fill="#FFF0F5" stroke="#C02662" stroke-width="2"/>
+  <text x="3145" y="2370" class="small">采样 / 回环</text>
+  <rect x="3370" y="2350" width="38" height="25" rx="6" fill="#ECF8EF" stroke="#2F855A" stroke-width="2"/>
+  <text x="3420" y="2370" class="small">训练 / 输出</text>
+  <text x="2375" y="2412" class="mono-small">model.py:23–69  QKV/cache/mask　｜　101–117  Pre-LN Block</text>
+  <text x="2375" y="2442" class="mono-small">model.py:221–228 position offset　｜　275–292 prefill/decode</text>
+  <text x="2375" y="2472" class="mono-small">generate.py:99–130 generation loop　｜　tokenizer.py:1–23 word-level codec</text>
+
+  <text x="3740" y="2565" text-anchor="end" class="tiny">Figure generated from the current repository implementation · Shapes use batch-first notation</text>
+</svg>

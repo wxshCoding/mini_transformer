@@ -1,0 +1,55 @@
+the cat drinks milk
+the dog eats meat
+the bird flies in the sky
+the fish swims in the water
+the cat sleeps on the sofa
+the dog runs in the park
+the boy reads a book
+the girl writes a letter
+the man drinks water
+the woman eats an apple
+
+the cat likes milk
+the dog likes meat
+the boy likes football
+the girl likes music
+the bird likes the sky
+the fish likes water
+
+the cat is small
+the dog is strong
+the bird is beautiful
+the fish is quiet
+the boy is happy
+the girl is smart
+
+the cat drinks milk because it is thirsty
+the dog eats meat because it is hungry
+the boy drinks water because he is thirsty
+the girl eats an apple because she is hungry
+
+the sun rises in the morning
+the moon shines at night
+the stars shine in the sky
+the wind blows through the trees
+the rain falls from the sky
+
+machine learning is interesting
+deep learning is powerful
+neural networks can learn patterns
+transformers can process language
+attention helps models understand context
+language models predict the next token
+
+the transformer uses self attention
+self attention compares tokens with tokens
+the query asks what information is needed
+the key describes what information is available
+the value contains the information
+attention combines useful information
+
+the model learns from data
+the model predicts the next word
+the model calculates a loss
+the optimizer updates the parameters
+training repeats many times
