@@ -2,6 +2,13 @@
 
 一个用于动手学习 Transformer / GPT 基础原理的最小项目。
 
+## 深入学习资料
+
+- [完整源码学习手册](CODE_WALKTHROUGH.md)：从 tokenizer、训练数据、Attention 公式到 Prefill / KV Cache / Decode 的逐步讲解
+- [完整模型流程图](model_prefill_flowchart.svg)
+- [模型主干与训练放大图](model_training_detail.svg)
+- [Attention 与 KV Cache 放大图](attention_kv_cache_detail.svg)
+
 ## 文件
 
 - `data.txt`：简单英文语料库
