@@ -11,6 +11,7 @@
 - 为什么 cache 满后不能简单删除最旧的 K/V？
 - 训练、普通前向、Prefill、Decode 四条执行路径有什么区别？
 - 单元测试怎样证明缓存推理与完整前向等价？
+- MoE 怎样为每个 token 选择专家，router 又怎样通过损失学习？
 
 建议一边阅读本文，一边打开已经生成的流程图：
 
@@ -29,6 +30,7 @@
 | `model.py` | Transformer、Attention、KV cache、Prefill 和 Decode 的核心实现 | 3 |
 | `generate.py` | 加载 checkpoint，执行 Prefill + Decode 自回归生成 | 4 |
 | `test_prefill.py` | 验证缓存推理、训练兼容性和滑窗控制流 | 5 |
+| `test_moe.py` | 验证稀疏路由、训练梯度、MoE 缓存一致性及模型加载 | 6 |
 | `data.txt` | 训练语料 | 随时查看 |
 
 完整生命周期是：
@@ -44,7 +46,7 @@ SimpleTokenizer 构建 stoi / itos
    ↓
 TransformerLanguageModel 训练
    ↓
-保存 model.pt（权重 + stoi + itos）
+保存 model.pt（权重 + model_config + stoi + itos）
    ↓
 generate.py 加载 checkpoint
    ↓
@@ -59,7 +61,7 @@ Prompt Prefill → 单 token Decode / 满窗 Re-Prefill
 pip install -r requirements.txt
 python train.py
 python generate.py
-python -m unittest -v test_prefill.py
+python -m unittest -v test_prefill.py test_moe.py
 ```
 
 `generate.py` 需要训练产生的 `model.pt`。当前仓库没有预置 checkpoint 时，应先运行训练。
@@ -83,6 +85,8 @@ python -m unittest -v test_prefill.py
 | `D_h` | 每个 head 的维度，`C/H` | 32 |
 | `L` | Transformer Block 数量 | 3 |
 | `d_ff` | FFN 中间层维度，`4C` | 512 |
+| `E` | 每层 MoE 的专家数 `num_experts` | 4 |
+| `K` | 每个 token 选择的专家数 `top_k` | 2 |
 
 最重要的 shape 速查：
 
@@ -243,6 +247,9 @@ seq_len      = 8
 d_model      = 128
 num_heads    = 4
 num_layers   = 3
+num_experts  = 4
+top_k        = 2
+aux_loss_coef= 0.01
 learning_rate= 3e-4
 train_steps  = 5000
 ```
@@ -265,14 +272,15 @@ checkpoint 包含：
 ```python
 {
     "model_state_dict": model.state_dict(),
+    "model_config": model_config,
     "stoi": tokenizer.stoi,
     "itos": tokenizer.itos,
 }
 ```
 
-它没有保存模型超参数，因此 `generate.py` 必须用与训练完全相同的 `max_seq_len=8`、`d_model=128`、`num_heads=4`、`num_layers=3` 重建模型。
-
-如果以后修改训练结构，建议同时把配置写入 checkpoint。
+`model_config` 保存上下文长度、隐藏维度、层数和 MoE 配置。`generate.py` 用它重建模型，再加载权重。
+模型固定使用 MoE 和 KV cache；生成脚本直接读取 `model_config`。
+结构变更前保存的 checkpoint 需要用当前 `train.py` 重新训练生成。
 
 ---
 
@@ -525,11 +533,11 @@ out.transpose(1, 2).contiguous().view(B, T, C)
 
 ## 8. Transformer Block：为什么叫 Pre-LN
 
-当前 Block 的公式：
+当前模型固定使用带 KV cache 的 Attention 和 MoE，Block 的公式为：
 
 ```text
 Y       = X_l + MHA(LN1(X_l))
-X_(l+1) = Y   + FFN(LN2(Y))
+X_(l+1) = Y   + MoE(LN2(Y))
 ```
 
 LayerNorm 在子层之前，所以称为 Pre-LN。
@@ -542,15 +550,15 @@ X_l
  └────────────────────────────↑
 
 Y
- ├─→ LayerNorm2 → FFN ────────→ + ─→ X_(l+1)
+ ├─→ LayerNorm2 → MoE ────────→ + ─→ X_(l+1)
  └────────────────────────────↑
 ```
 
 两条跳线就是 residual connection。它让网络更容易保留原始信息，并改善深层网络的梯度传播。
 
-### FFN
+### FFN：MoE 内部的专家
 
-每个 token 独立经过：
+每个专家是一个 `FeedForward`，收到的 token 分别经过：
 
 ```text
 Linear(128, 512)
@@ -559,6 +567,63 @@ Linear(128, 512)
 ```
 
 Attention 负责 token 之间的信息交互，FFN 负责对每个 token 的特征进行非线性变换。
+
+### MoE：用多个专家替换 FFN
+
+每个 Block 直接定义 `self.moe = MoE(...)`，第二条残差为：
+
+```text
+X_(l+1) = Y + MoE(LN2(Y))
+```
+
+每层有自己的 router 和 `E=4` 个专家，每个专家仍是上面那个 `FeedForward`，参数互不共享。
+router 对每个 token 选择 `K=2` 个专家。它根据 token 当前的隐藏向量学习选择，专家没有预先指定的主题或分工。
+
+`MoE.forward` 的计算顺序：
+
+| 步骤 | 代码或含义 | shape |
+|---|---|---|
+| 展平 token | `tokens = x.reshape(B*T, C)`，令 `N=B*T` | `[N,C]` |
+| router 打分 | `router(tokens)`，对每个专家输出一个分数 | `[N,E]` |
+| 概率 | `softmax(..., dim=-1)` | `[N,E]` |
+| 选择专家 | `weights, expert_indices = probs.topk(K)` | 两者均为 `[N,K]` |
+| 权重归一化 | 选中的 K 个权重除以它们的和 | `[N,K]` |
+| 分发计算 | 每个专家只处理选中自己的 token | `[该专家收到的 token 数,C]` |
+| 合并 | `index_add_` 把加权输出累加回原 token 的位置 | `[N,C] → [B,T,C]` |
+
+例如某个 token 的路由概率为 `[0.1, 0.6, 0.2, 0.1]`，top-2 选中专家 1、2：
+
+```text
+归一化权重 = [0.6, 0.2] / 0.8 = [0.75, 0.25]
+MoE(x) = 0.75 * expert_1(x) + 0.25 * expert_2(x)
+```
+
+`torch.where(expert_indices == expert_id)` 返回两个索引：token 的编号，以及该专家在这个 token 的 top-k 中的槽位。
+例如槽位为 1，就应取该 token 的第二个路由权重。一个 token 有 K 份输出，所以 `index_add_` 要累加，不能覆盖。
+
+为什么 router 能训练？`topk` 返回的离散专家编号不求导，但选中的概率仍在计算图中，
+主损失可以通过加权求和更新 router。若 `top_k=1`，归一化后唯一的权重恒为 1，
+这条主损失路径无法有效训练 router，因此还要理解辅助损失。
+
+为了减少 token 总挤向少数专家的倾向，代码加入一个简单的负载均衡损失：
+
+```text
+load[e]       = 专家 e 被选中的次数 / (N*K)
+mean_probs[e] = N 个 token 对专家 e 的完整路由概率的平均值
+aux_loss      = E * Σ_e load[e] * mean_probs[e]
+```
+
+`load` 来自离散选择，不求导；`mean_probs` 保留梯度。如果专家分配完全均匀，辅助损失等于 1，
+它不是应该收敛到 0 的预测误差。模型将各层的辅助损失取平均，再以 `aux_loss_coef=0.01` 加入交叉熵。
+它鼓励均衡，不保证每个 batch 都平均使用所有专家；未被选中的专家在该步没有梯度是正常的。
+
+内部 `TransformerBlock` 固定返回 `(x, present_key_value, aux_loss)`，Attention 固定返回输出和完整 K/V。
+这样损失沿返回值显式传到模型，无需在模块属性中保留带计算图的临时状态。
+公开的 `model(...)`、`prefill(...)`、`decode(...)` 仍各自返回原来的二元组。
+
+MoE 不在 token 之间混合特征，路由也不依赖其他 token，所以 KV cache 仍只保存 Attention 的 K/V。
+本实现不做容量限制、丢弃 token、共享专家或分布式通信；专家循环优先服务理解，不保证推理速度提升。
+已有流程图中的 Block FFN 方框，对应当前模型的 MoE。
 
 ---
 
@@ -570,14 +635,17 @@ Attention 负责 token 之间的信息交互，FFN 负责对每个 token 的特�
 
 1. 检查 `input_ids` 必须是 `[B,T]`。
 2. 检查 `T > 0`。
-3. 校验每层 cache 的层数、shape、batch、head、head_dim 和历史长度。
+3. 无历史缓存时 `P=0`；有缓存时，从第一层 K 的序列维读取历史长度 P。
 4. 计算 `total_length = P + T`，保证不超过 `max_seq_len`。
 5. 生成 cache-aware position ids。
 6. Token Embedding 与 Position Embedding 相加。
 7. 逐层传入对应的 `(K_l,V_l)`。
-8. 如果 `use_cache=True`，收集每层更新后的 cache。
+8. 收集每层更新后的 cache。
 9. Final LayerNorm。
 10. LM Head 得到 `[B,T,V]` logits。
+
+内部固定返回 `(logits, next_cache, aux_loss)`，最后一项为各层辅助损失的平均值。
+`prefill/decode` 丢弃辅助损失，只向调用者返回 logits 和 cache。
 
 KV cache 的完整结构是：
 
@@ -601,7 +669,7 @@ KV cache 的完整结构是：
 logits, loss = model(input_ids, targets)
 ```
 
-它不使用 cache，以确保原训练代码保持简单。
+底层每次都会生成 cache；训练的各 batch 独立，因此此接口丢弃本批 cache，不跨批复用。
 
 如果提供 targets：
 
@@ -615,8 +683,11 @@ targets.reshape(B * T)
 数学形式：
 
 ```text
-Loss = -(1 / (B·T)) Σ_(b,t) log softmax(logits[b,t])[targets[b,t]]
+CE = -(1 / (B·T)) Σ_(b,t) log softmax(logits[b,t])[targets[b,t]]
+Loss = CE + aux_loss_coef * mean_layer_aux_loss
 ```
+
+没有 targets 时，公开接口返回 `(logits, None)`。
 
 ---
 
@@ -832,8 +903,9 @@ logits                            [1,1,117]
 
 ---
 
-## 14. 参数量怎样得到 626,165
+## 14. 参数量：普通 FFN 与 MoE
 
+先以普通 FFN 结构的 626,165 个参数作为理论对照，再计算当前固定 MoE 模型的参数量。
 这个数字依赖当前 `data.txt` 构造出的 `V=117`；换语料后词表大小和总参数量都会变化。
 
 ### Embedding
@@ -897,6 +969,19 @@ LM Head: 128×117 + 117 =   15,093
 
 其中前两项是 token/position embedding，中间是 `L` 个 Block，`2C` 是 Final LayerNorm，最后两项是 LM Head。
 
+### 默认 MoE 的参数量
+
+每层将 1 个 FFN 换成 4 个，并增加一个 `Linear(128, 4)` router：
+
+```text
+每层新增 = (4-1) × 131,712 + (128×4 + 4) = 395,652
+总参数量 = 626,165 + 3 × 395,652 = 1,813,121
+```
+
+所有专家参数都占内存，但每个 token 只激活其中 2 个。这里各专家与原 FFN 同样大，
+所以默认 MoE 的专家计算量约为原 FFN 的两倍，另有路由和分发开销。MoE 提供更多参数容量，
+不等于比原来的单 FFN 更省计算。`top_k` 改变每个 token 的计算量，不改变总参数量。
+
 ---
 
 ## 15. 复杂度与 Cache 内存
@@ -909,7 +994,7 @@ LM Head: 128×117 + 117 =   15,093
 O(T·C² + T²·C)
 ```
 
-- 线性投影和 FFN 主要是 `T·C²`。
+- 线性投影和 FFN 主要是 `T·C²`；MoE 的专家部分约为 `K·T·C²`，另有 router 和分发开销。
 - Attention 的 query-key/value 交互主要是 `T²·C`。
 
 ### 单 token Decode
@@ -1023,6 +1108,12 @@ Fake model 会：
 
 ---
 
+### 16.6 `test_moe.py`
+
+用固定路由和固定专家输出核对分发、权重与求和结果，确认没有被选中的专家不会执行。
+另外验证辅助损失的数值、router 与专家的梯度、MoE 的缓存推理一致性，以及保存配置后的模型加载和滑窗生成。
+这些测试都不依赖已有 `model.pt`。
+
 ## 17. 最常见的理解错误
 
 ### 错误 1：Prefill 后还要 Decode prompt 最后一个 token
@@ -1130,7 +1221,7 @@ CUDA 还可能需要额外的确定性设置。
 
 1. 添加 validation split。
 2. 定期计算 validation loss。
-3. 将模型超参数保存进 checkpoint。
+3. 在 checkpoint 中额外保存 step 和优化器状态，练习断点续训。
 4. 添加随机种子和更完整的日志。
 
 ### Level 4：Tokenizer 和 Batch

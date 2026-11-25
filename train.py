@@ -8,7 +8,7 @@
     -> 随机截取多个长度为 ``seq_len`` 的滑动窗口
     -> 将窗口右移一位作为 next-token 监督标签
     -> Transformer 输出每个位置对整个词表的 logits
-    -> 交叉熵损失比较 logits 和正确的下一个 token
+    -> 交叉熵损失比较 logits 和正确的下一个 token，加上 MoE 负载均衡损失
     -> 反向传播并用 AdamW 更新参数
     -> 将模型权重与 tokenizer 词表保存到 ``model.pt``
 
@@ -49,6 +49,12 @@ num_heads = 4
 # 串联的 Transformer Block 数量，也可理解为网络深度。层数更多通常带来更强
 # 表达能力，同时增加参数量、计算量和 KV cache 占用。
 num_layers = 3
+
+# MoE：每层有 4 个独立 FFN 专家，每个 token 只经过其中 2 个。
+# top_k 应在 [1, num_experts] 内，MoE 是模型的固定组成部分。
+num_experts = 4
+top_k = 2
+aux_loss_coef = 0.01
 
 # AdamW 每次更新参数时使用的学习率。过大会导致训练不稳定，过小会收敛很慢。
 # 3e-4 等价于 0.0003，是训练小型 Transformer 时常见的起始量级。
@@ -176,17 +182,21 @@ def get_batch():
 # ---------------------------------------------------------------------------
 # 6. 实例化 Transformer 语言模型
 # ---------------------------------------------------------------------------
-model = TransformerLanguageModel(
-    # token embedding 需要知道可接受多少种 id，lm_head 也需要为词表中的每个
-    # token 输出一个分数，所以两端都使用 tokenizer.vocab_size。
-    vocab_size=tokenizer.vocab_size,
-
+# 结构配置和权重一起保存，让 generate.py 按相同配置重建 MoE 模型。
+model_config = dict(
     # 模型使用可学习的位置 embedding，其容量由 max_seq_len 决定。这里将其
     # 设为训练窗口长度，因此单次完整 forward/prefill 最多处理 8 个位置。
     max_seq_len=seq_len,
     d_model=d_model,
     num_heads=num_heads,
     num_layers=num_layers,
+    num_experts=num_experts,
+    top_k=top_k,
+    aux_loss_coef=aux_loss_coef,
+)
+model = TransformerLanguageModel(
+    vocab_size=tokenizer.vocab_size,
+    **model_config,
 ).to(device)
 # .to(device) 会把模型中所有参数和 buffer 搬到所选设备，并返回模型本身。
 
@@ -231,7 +241,7 @@ for step in range(train_steps):
     # (2) 前向传播。
     # logits 形状为 [B, T, V]：每个样本、每个序列位置，都得到 V=vocab_size
     # 个未归一化分数。因为传入了 y，model.forward 还会把 [B,T,V] 和 [B,T]
-    # 展平后计算交叉熵，返回标量 loss（整个 batch、全部位置的平均损失）。
+    # 展平后计算平均交叉熵，再加 aux_loss_coef * 各层平均负载均衡损失。
     logits, loss = model(x, y)
 
     # (3) 清除上一步遗留的梯度。
@@ -266,15 +276,16 @@ for step in range(train_steps):
 # torch.save 会把下面的字典序列化到 model.pt：
 #
 # * model_state_dict：参数名 -> 权重张量，是恢复模型权重的标准形式；
+# * model_config：包含隐藏维度、专家数等模型配置，供生成脚本重建网络；
 # * stoi / itos：训练时的双向词表，推理时必须复用，不能根据新 prompt 重建。
 #
-# 这个 checkpoint 没有保存模型超参数、当前 step、优化器状态或随机数状态，
+# 这个 checkpoint 没有保存当前 step、优化器状态或随机数状态，
 # 因而足够供本项目的生成脚本加载，但不能精确地从中断处恢复完整训练过程。
-# 加载时还需先用相同 d_model、num_heads、num_layers、max_seq_len 实例化模型，
-# 再调用 load_state_dict(...) 加载权重。
+# 加载时先用 model_config 实例化模型，再调用 load_state_dict(...) 加载权重。
 torch.save(
     {
         "model_state_dict": model.state_dict(),
+        "model_config": model_config,
         "stoi": tokenizer.stoi,
         "itos": tokenizer.itos,
     },

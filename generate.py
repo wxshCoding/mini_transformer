@@ -27,11 +27,12 @@ _default_runtime = None
 def load_runtime(checkpoint_path="model.pt"):
     """从 checkpoint 构造默认的推理模型与双向词表。
 
-    checkpoint 需要至少包含三个键：
+    checkpoint 包含以下四个键：
 
     - ``model_state_dict``：模型参数；
     - ``stoi``（string to index）：``单词 -> token id`` 的字典；
-    - ``itos``（index to string）：``token id -> 单词`` 的序列。
+    - ``itos``（index to string）：``token id -> 单词`` 的序列；
+    - ``model_config``：训练时保存的模型配置。
 
     ``map_location=device`` 保证即使 checkpoint 原本是在另一种设备上保存的，也会在
     当前可用设备上恢复。模型结构参数必须与训练并保存该 checkpoint 时一致，否则
@@ -48,14 +49,11 @@ def load_runtime(checkpoint_path="model.pt"):
     itos = checkpoint["itos"]
     stoi = checkpoint["stoi"]
 
-    # 这里重建的网络超参数要和 checkpoint 对应。len(itos) 就是词表大小：合法 token
-    # id 的范围为 [0, len(itos) - 1]。
+    # 直接按当前训练脚本保存的配置重建固定使用 MoE 的模型。
+    model_config = checkpoint["model_config"]
     model = TransformerLanguageModel(
         vocab_size=len(itos),
-        max_seq_len=8,
-        d_model=128,
-        num_heads=4,
-        num_layers=3,
+        **model_config,
     ).to(device)
 
     # state_dict 只保存参数/缓冲区，不保存 Python 模型对象本身；因此先按相同结构实例化，
@@ -254,5 +252,5 @@ def generate(
 if __name__ == "__main__":
     # 直接运行本文件时才执行演示；被测试或其他模块 import 时不会自动生成文本。
     print(generate("the cat", max_new_tokens=15))
-    print(generate("the model", max_new_tokens=15))
-    print(generate("attention", max_new_tokens=15))
+    # print(generate("the model", max_new_tokens=15))
+    # print(generate("attention", max_new_tokens=15))
