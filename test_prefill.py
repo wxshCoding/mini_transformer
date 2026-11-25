@@ -149,6 +149,27 @@ class PrefillTest(unittest.TestCase):
         loss.backward()
         self.assertIsNotNone(self.model.token_embedding.weight.grad)
 
+    def test_regular_forward_uses_attention_without_cache(self):
+        """普通 forward 在 train/eval 下都走无缓存路径，Attention 只返回张量。"""
+        attention_outputs = []
+        handles = [
+            block.attention.register_forward_hook(
+                lambda module, args, output: attention_outputs.append(output)
+            )
+            for block in self.model.blocks
+        ]
+        for training in (True, False):
+            with self.subTest(training=training):
+                self.model.train(training)
+                attention_outputs.clear()
+                self.model(torch.tensor([[1, 2, 3, 4]]))
+                self.assertEqual(len(attention_outputs), len(self.model.blocks))
+                for output in attention_outputs:
+                    self.assertIsInstance(output, torch.Tensor)
+                    self.assertEqual(output.shape, (1, 4, 16))
+        for handle in handles:
+            handle.remove()
+
     def test_invalid_prefill_and_decode_inputs_are_rejected(self):
         """模型应在非法长度、空输入和错误 decode 形状处尽早给出明确错误。"""
         # 至少需要一个合法位置 embedding。

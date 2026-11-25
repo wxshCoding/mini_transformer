@@ -279,7 +279,7 @@ checkpoint 包含：
 ```
 
 `model_config` 保存上下文长度、隐藏维度、层数和 MoE 配置。`generate.py` 用它重建模型，再加载权重。
-模型固定使用 MoE 和 KV cache；生成脚本直接读取 `model_config`。
+模型固定使用 MoE，KV cache 仅在推理路径维护；生成脚本直接读取 `model_config`。
 结构变更前保存的 checkpoint 需要用当前 `train.py` 重新训练生成。
 
 ---
@@ -533,7 +533,7 @@ out.transpose(1, 2).contiguous().view(B, T, C)
 
 ## 8. Transformer Block：为什么叫 Pre-LN
 
-当前模型固定使用带 KV cache 的 Attention 和 MoE，Block 的公式为：
+当前模型固定使用 Attention 和 MoE，推理入口负责维护 KV cache。Block 的公式为：
 
 ```text
 Y       = X_l + MHA(LN1(X_l))
@@ -617,8 +617,9 @@ aux_loss      = E * Σ_e load[e] * mean_probs[e]
 它不是应该收敛到 0 的预测误差。模型将各层的辅助损失取平均，再以 `aux_loss_coef=0.01` 加入交叉熵。
 它鼓励均衡，不保证每个 batch 都平均使用所有专家；未被选中的专家在该步没有梯度是正常的。
 
-内部 `TransformerBlock` 固定返回 `(x, present_key_value, aux_loss)`，Attention 固定返回输出和完整 K/V。
-这样损失沿返回值显式传到模型，无需在模块属性中保留带计算图的临时状态。
+`TransformerBlock.forward` 返回 `(x, aux_loss)`，其中 Attention 只返回输出，不维护 KV cache。
+`TransformerBlock.forward_with_cache` 供推理使用，返回 `(x, present_key_value)`，其中 Attention 返回输出和完整 K/V。
+训练中的辅助损失沿返回值显式传到模型，无需在模块属性中保留带计算图的临时状态。
 公开的 `model(...)`、`prefill(...)`、`decode(...)` 仍各自返回原来的二元组。
 
 MoE 不在 token 之间混合特征，路由也不依赖其他 token，所以 KV cache 仍只保存 Attention 的 K/V。
@@ -627,25 +628,26 @@ MoE 不在 token 之间混合特征，路由也不依赖其他 token，所以 KV
 
 ---
 
-## 9. `_forward_impl`：模型真正的统一执行核心
+## 9. `_forward_impl` 与 `_forward_with_cache`：分开训练和缓存推理
 
-普通 forward、Prefill 和 Decode 最终都会复用 `_forward_impl`。
+普通 `forward` 调用 `_forward_impl`，训练只处理当前完整序列，不创建或收集 KV cache：
 
-它依次做：
+1. `_embed(input_ids)` 生成输入向量，位置从 0 开始。
+2. 每层调用 `block(x)`，获得隐藏状态和本层 MoE 辅助损失。
+3. Final LayerNorm 与 LM Head 得到 `[B,T,V]` logits。
+4. 返回 `(logits, mean_aux_loss)`，供公开 `forward` 计算总损失。
 
-1. 检查 `input_ids` 必须是 `[B,T]`。
-2. 检查 `T > 0`。
-3. 无历史缓存时 `P=0`；有缓存时，从第一层 K 的序列维读取历史长度 P。
-4. 计算 `total_length = P + T`，保证不超过 `max_seq_len`。
-5. 生成 cache-aware position ids。
-6. Token Embedding 与 Position Embedding 相加。
-7. 逐层传入对应的 `(K_l,V_l)`。
-8. 收集每层更新后的 cache。
-9. Final LayerNorm。
-10. LM Head 得到 `[B,T,V]` logits。
+`prefill/decode` 调用 `_forward_with_cache`，只有这条路径维护缓存：
 
-内部固定返回 `(logits, next_cache, aux_loss)`，最后一项为各层辅助损失的平均值。
-`prefill/decode` 丢弃辅助损失，只向调用者返回 logits 和 cache。
+1. 无历史缓存时 `P=0`；有缓存时，读取已有 K/V 的序列长度 P。
+2. `_embed(input_ids, P)` 生成输入向量，位置从 P 开始。
+3. 每层调用 `block.forward_with_cache(x, layer_past)`，追加当前 token 的 K/V。
+4. 按层收集新 cache；Final LayerNorm 与 LM Head 得到 logits。
+5. 返回 `(logits, next_cache)`。推理不使用 MoE 辅助损失。
+
+两条路径共用 `_embed` 中的长度检查、Token Embedding 和 Position Embedding，
+也共用 Attention 的 `_project_qkv` 和 `_attention` 数学计算，没有额外启用开关。
+训练也必须计算 Q/K/V；KV cache 指的是将 K/V 留给后续 token 复用，而非 K/V 张量本身。
 
 KV cache 的完整结构是：
 
@@ -669,7 +671,7 @@ KV cache 的完整结构是：
 logits, loss = model(input_ids, targets)
 ```
 
-底层每次都会生成 cache；训练的各 batch 独立，因此此接口丢弃本批 cache，不跨批复用。
+它通过 `_forward_impl` 走完整序列前向，不创建、收集或复用 KV cache。
 
 如果提供 targets：
 

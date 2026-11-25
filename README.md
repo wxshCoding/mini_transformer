@@ -38,13 +38,13 @@ python train.py
 model.pt
 ```
 
-模型固定使用 MoE 和 KV cache：每层 4 个 FFN 专家，每个 token 选择其中 2 个。
+模型固定使用 MoE：每层 4 个 FFN 专家，每个 token 选择其中 2 个；推理使用 KV cache。
 建议学习时先调小 `train_steps`。checkpoint 同时保存模型配置，`generate.py` 按配置加载。
 结构变更前保存的 checkpoint 需要用当前 `train.py` 重新训练生成。
 
 ## MoE 怎样工作
 
-每个 Block 由带 KV cache 的 Attention 和 MoE（Mixture of Experts）组成。
+每个 Block 由 Attention 和 MoE（Mixture of Experts）组成，KV cache 仅在推理路径中维护。
 每个专家都是现有的 `FeedForward`，拥有各自独立的参数。
 
 ```text
@@ -100,8 +100,9 @@ logits, kv_cache = model.decode(next_token, kv_cache)
 prompt 超过 `max_seq_len` 时，也只会 prefill 最近一个窗口。当前模型没有 padding mask，
 批量 prefill 仅适用于长度相同且不含 padding 的输入。
 
-Attention 每次固定返回输出和完整 K/V。训练的 `model(x, y)` 丢弃本批缓存，
-`prefill/decode` 则返回缓存供后续调用复用，无需额外启用参数。
+训练的 `model(x, y)` 走 `_forward_impl`，普通 Attention 只返回输出，不创建或收集 KV cache。
+`prefill/decode` 走 `_forward_with_cache`，通过各层的 `forward_with_cache` 建立和更新缓存，无需启用开关。
+两条路径都计算注意力所需的 Q/K/V，区别在于是否将 K/V 留给后续推理复用。
 
 运行测试：
 
